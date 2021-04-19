@@ -3,14 +3,11 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-		<title>Title</title>
-
+		<title>Bash Scripting</title>
 		<link rel="stylesheet" href="reveal.js/dist/reset.css">
 		<link rel="stylesheet" href="reveal.js/dist/reveal.css">
 		<link rel="stylesheet" href="reveal.js/dist/theme/night.css" id="theme">
 		<link rel="stylesheet" href="reveal.js/dist/user.css">
-
 		<!-- Theme used for syntax highlighted code -->
 		<link rel="stylesheet" href="reveal.js/plugin/highlight/monokai.css" id="highlight-theme">
 	</head>
@@ -18,12 +15,339 @@
 		<div class="reveal">
 			<div class="slides">
 				<section>
-					<h1>Random Forests</h1>
+					<h1>Bash Scripting</h1>
 					<p>Bastian Schiffthaler</p>
+				</section>
+				<section>
+					<section>
+						<p>The quintessential script</p>
+						<pre><code data-trim data-noescape class="bash">
+							#!/usr/bin/env bash
+							# Always set these options
+							set -o errexit # Terminate the script on error
+							set -o errtrace # Propagate error signal up from functions
+							set -o nounset # Do not allow using variables that haven't been set
+							set -o pipefail # Prevent errors in pipes from being masked
+							set -o xtrace # Print at all times trace info about the script's state
+							echo "Hello, world!"
+						</code></pre>
+						Script needs to be executable and won't be found in <span class="monokai-red">$PATH</span> (so use a qualified path).
+						<pre><code data-trim data-noescape class="bash">
+							$ chmod u+x my_script.sh
+							$ ./my_script.sh
+						</code></pre>
+					</section>
+				</section>
+				<section>
+					<section>
+						<p>Variables</p>
+						<pre><code data-trim data-noescape class="bash">
+							#!/usr/bin/env bash
+							set -euxo pipefail
+							set -o errtrace
+							# Set some variables. These are by convention upper case
+							# No space is allowed around the '=' sign
+							MY_VAR="house" # Strings are quoted
+							MY_OTHER_VAR=42 # Numbers aren't (although bash doesn't know about types)
+							# Print the variables
+							echo ${MY_VAR} ${MY_OTHER_VAR}
+						</code></pre>
+					</section>
+					<section>
+						<p>Manipulating strings and numbers: Math with numbers</p>
+						<p class="small">CAVEAT: Integers-only. If you need to do real math, use R, Python, etc.</p>
+						<pre><code data-trim data-noescape class="bash">
+							#!/usr/bin/env bash
+							set -euxo pipefail
+							set -o errtrace
+							# Assign a numeric variable
+							NUM=1
+							echo ${NUM}
+							# Now let's do some math
+							NUM=$(( NUM + 10 )) # Note the $-sign and double parentheses
+							echo ${NUM}
+						</code></pre>
+					</section>
+					<section>
+						<p>Manipulating strings and numbers: Math with numbers</p>
+						<pre><code data-trim data-noescape class="bash">
+							#!/usr/bin/env bash
+							set -euxo pipefail
+							set -o errtrace
+							# Arithmetic works as it does in C (with extras)
+							NUM=10
+							echo $(( NUM * 2 )) # Multiplication: 20
+							echo $(( NUM / 3 )) # Integer division: 3
+							echo $(( NUM + 5 )) # Addition: 15
+							echo $(( NUM - 5 )) # Subtraction: 5
+							echo $(( NUM ** 2 )) # Eponentiation: 100
+							echo $(( NUM % 3 )) # Modulo/Remainder: 1
+						</code></pre>
+						<p>And <a href="https://www.gnu.org/software/bash/manual/html_node/Shell-Arithmetic.html">more...</a> </p>
+					</section>
+					<section>
+						<p>Manipulating strings and numbers: Strings - Substrings</p>
+						<p class="small"> <a href="https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html#Shell-Parameter-Expansion">Full reference</a> </p>
+						<ul>
+							<li class="small">Take substring by index: <code class="bash monokai-red">${VARIABLE:INDEX}</code></li>
+							<li class="small">Take substring by index and length: <code class="bash monokai-red">${VARIABLE:INDEX:LENGTH}</code></li>
+						</ul>
+						<pre><code data-trim data-noescape class="bash">
+							#!/usr/bin/env bash
+							set -euxo pipefail
+							set -o errtrace
+							WORD="SomeSometexttext"
+							# Substring by starting position
+							echo ${WORD:5} # Prints: ometexttext
+							# Substring by starting position and length
+							echo ${WORD:0:3} # Prints: "Som". Index starts at 0
+							echo ${WORD:3:3} # Prints: "eSo". Second parameter is length
+							echo ${WORD:0:-5} # Prints: "SomeSometex". Negative length removes from end
+						</code></pre>
+					</section>
+					<section>
+						<p>Manipulating strings and numbers: Strings - removing patterns</p>
+						<ul>
+							<li class="small">Remove shortest match from end: <code class="bash monokai-red">${VARIABLE%PATTERN}</code></li>
+							<li class="small">Remove longest match from end: <code class="bash monokai-red">${VARIABLE%%PATTERN}</code></li>
+							<li class="small">Remove shortest match from beginning: <code class="bash monokai-red">${VARIABLE#PATTERN}</code></li>
+							<li class="small">Remove longest match from beginning: <code class="bash monokai-red">${VARIABLE##PATTERN}</code></li>
+						</ul>
+						<pre><code data-trim data-noescape class="bash">
+							#!/usr/bin/env bash
+							set -euxo pipefail
+							set -o errtrace
+							WORD="SomeSometexttext"
+							echo ${WORD%text*} # Remove pattern from end, shortest match: "SomeSometext"
+							echo ${WORD%%text*} # Remove pattern from end, shortest match: "SomeSome "
+							echo ${WORD#*Some} # Remove pattern from beginning, shortest match: "Sometexttext"
+							echo ${WORD##*Some} # Remove pattern from beginning, longest match: "textext"
+						</code></pre>
+					</section>
+					<section>
+						<p>Manipulating strings and numbers: Strings - replacing patterns</p>
+						<ul>
+							<li class="small">Replace first pattern match: <code class="bash monokai-red">${VARIABLE/PATTERN/REPLACEMENT}</code></li>
+							<li class="small">Replace all pattern matches: <code class="bash monokai-red">${VARIABLE//PATTERN/REPLACEMENT}</code></li>
+							<li class="small">Replace first pattern match at the beginning: <code class="bash monokai-red">${VARIABLE/#PATTERN/REPLACEMENT}</code></li>
+							<li class="small">Replace first pattern match at the end: <code class="bash monokai-red">${VARIABLE/%PATTERN/REPLACEMENT}</code></li>
+						</ul>
+						<pre><code data-trim data-noescape class="bash">
+							#!/usr/bin/env bash
+							set -euxo pipefail
+							set -o errtrace
+							WORD="SomeSometexttext"
+							echo ${WORD/ome/new} # SnewSometexttext
+							echo ${WORD//ome/new} # SnewSnewtexttext
+							echo ${WORD/#Some/new} # newSometexttext
+							echo ${WORD/%ext/new} # SomeSometexttnew
+						</code></pre>
+					</section>
+					<section>
+						<p>Capturing subcommand output in variables</p>
+						<pre><code data-trim data-noescape class="bash">
+						VAR=$(command command-args)
+						</code></pre>
+					</section>
+					<section>
+						<p>Example: basename</p>
+						<pre><code data-trim data-noescape class="bash">
+						#!/usr/bin/env bash
+						set -euxo pipefail
+						set -o errtrace
+
+						FULL_NAME="/home/bastian/filename.txt"
+						# Now capture the base name in variable "BASE"
+						BASE=$(basename "${FULL_NAME}")
+						echo "${BASE}"
+						</code></pre>
+					</section>
+				</section>
+				<section>
+					<section>
+						<p>Conditions</p>
+						<p class="small">Bash supports conditional code execution</p>
+						<pre><code data-trim data-noescape class="bash">
+						if [[ CONDITION ]]; then
+						  # code
+						elif [[ ANOTHER_CONDITION ]]; then
+						  # code
+						else
+						  # code
+						fi
+						</code></pre>
+					</section>
+					<section>
+						<p>Common conditional checks: <code class="monokai-red">man test</code> </p>
+						<ul>
+							<li class="fragment"><code class="monokai-red">[[ -f FILE ]]</code>: FILE exists and is a regular file</li>
+							<li class="fragment"><code class="monokai-red">[[ -n ${VAR:x} ]]</code>: Variable VAR has been set to a value</li>
+							<li class="fragment"><code class="monokai-red">[[ VAR -eq 1 ]]</code>: Integer VAR is equal to 1. Also <code class="monokai-red">-gt -ge -lt -le</code></li>
+							<li class="fragment"><code class="monokai-red">[[ VAR = "word" ]]</code>: String VAR is equal to "word". Also <code class="monokai-red">!=</code></li>
+							<li class="fragment"><code class="monokai-red">[[ ! CONDITION ]]</code>: Negate CONDITION</li>
+						</ul>
+					</section>
+					<section>
+						<p>Example</p>
+						<pre><code data-trim data-noescape class="bash">
+						#!/usr/bin/env bash
+						set -euxo pipefail
+						set -o errtrace
+
+						if [[ -f "/etc/passwd" ]]; then
+						  echo "I found a file at /etc/passwd"
+						fi
+
+						VAR=${RANDOM}
+						if [[ ${VAR} -gt 10000 ]]; then
+						  echo "VAR is greater than 10000"
+						elif [[ ${VAR} -lt 500 ]]; then
+						  echo "VAR is less than 500"
+						fi
+						</code></pre>
+					</section>
+				</section>
+				<section>
+					<section>
+						<p>Loops</p>
+						<p class="small">For loop</p>
+						<pre><code data-trim data-noescape class="bash">
+						for VAR in PATTERN
+						do
+						  # code
+						done
+						</code></pre>
+						<p class="small">While loop</p>
+						<pre><code data-trim data-noescape class="bash">
+						while CONDITION
+						do
+						  # code
+						done
+						</code></pre>
+						<p class="small">Replace <code class="monokai-red">while</code> with <code class="monokai-red">until</code> to check the opposite condition</p>
+						</code></pre>
+					</section>
+					<section>
+						<p>Example for loop</p>
+						<pre><code data-trim data-noescape class="bash">
+						#!/usr/bin/env bash
+						set -euxo pipefail
+						set -o errtrace
+
+						for VAR in a b c 1 2 3
+						do
+						  echo "It's easy as ${VAR}"
+						done
+						</code></pre>
+					</section>
+					<section>
+						<p>Example while loop</p>
+						<pre><code data-trim data-noescape class="bash">
+						#!/usr/bin/env bash
+						set -euxo pipefail
+						set -o errtrace
+
+						VAR=10
+
+						while [[ ${VAR} -lt 20 ]]
+						do
+						  echo ${VAR}
+						  VAR=$(( VAR + 1 ))
+						done
+						</code></pre>
+					</section>
+					<section>
+						<p>A common for loop</p>
+						<pre><code data-trim data-noescape class="bash">
+						#!/usr/bin/env bash
+						set -euxo pipefail
+						set -o errtrace
+
+						for VAR_TIFF in *.tiff
+						do
+						  convert "${VAR_TIFF}" "${VAR_TIFF%.tiff}.jpg"
+						done
+						</code></pre>
+					</section>
+					<section>
+						<p>A common while loop</p>
+						<pre><code data-trim data-noescape class="bash">
+						#!/usr/bin/env bash
+						set -euxo pipefail
+						set -o errtrace
+
+						TXT_FILE="~/some_text_file.txt"
+
+						while read ONE_LINE
+						do
+						  echo ${ONE_LINE}
+						done < "${TXT_FILE}"
+						</code></pre>
+					</section>
+				</section>
+				<section>
+					<section>
+						<p>Arguments to bash scripts</p>
+						<p class="small">Arguments take the form:</p>
+						<pre><code class="bash">script.sh arg1 arg2 ... argN</code></pre>
+						<p class="small">How can we refer to user provided arguments from inside the script?</p>
+					</section>
+					<section>
+						<p>Special variables:</p>
+						<ul>
+							<li class="fragment"><code class="monokai-red">$0</code>: The path to the script itself</li>
+							<li class="fragment"><code class="monokai-red">$1</code>: First argument provided to the script</li>
+							<li class="fragment"><code data-escape class="bash monokai-red">$2 ...</code>: Second, third, n-th argument provided to the script</li>
+							<li class="fragment"><code class="monokai-red">$#</code>: Number of arguments provided to the script</li>
+							<li class="fragment"><code class="monokai-red">$@</code>: A list of all arguments provided to the script</li>
+						</ul>
+					</section>
+					<section>
+						<p>Example</p>
+						<pre><code data-trim data-noescape class="bash">
+						#!/usr/bin/env bash
+						set -euxo pipefail
+						set -o errtrace
+
+						IN_DIR=$1
+						OUT_DIR=$2
+
+						echo Converting files from "${IN_DIR}" to "${OUT_DIR}"
+						</code></pre>
+					</section>
+				</section>
+				<section>
+					<section>
+						<p>Functions</p>
+						<pre><code data-trim data-noescape class="bash">
+						fname() {
+						  # code
+						  # ARG1=$1
+						}
+						</code></pre>
+					</section>
+					<section>
+						<p>Example</p>
+						<pre><code data-trim data-noescape class="bash">
+						#!/usr/bin/env bash
+						set -euxo pipefail
+						set -o errtrace
+
+						fun() {
+						  local VAR=$1
+						  echo "fun() called with argument ${VAR}"
+						}
+
+						fun some_arg
+						</code></pre>
+					</section>
+				</section>
+				<section>
+					<p>Putting the pieces together</p>
+					<a href="https://gist.github.com/bschiffthaler/0a5b9426bdaf2be22aee8f992747113d">https://gist.github.com/bschiffthaler/0a5b9426bdaf2be22aee8f992747113d</a>
 				</section>
 			</div>
 		</div>
-
 		<script src="reveal.js/dist/reveal.js"></script>
 		<script src="reveal.js/plugin/notes/notes.js"></script>
 		<script src="reveal.js/plugin/markdown/markdown.js"></script>
@@ -35,9 +359,8 @@
 			// - https://revealjs.com/config/
 			Reveal.initialize({
 				hash: true,
-				width: 1600,
-				height: 1280,
-
+				width: 1280,
+				height: 720,
 				// Learn about plugins: https://revealjs.com/plugins/
 				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes, RevealMath ]
 			});
