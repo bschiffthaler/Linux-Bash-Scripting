@@ -206,6 +206,68 @@
 						fi
 						</code></pre>
 					</section>
+					<section>
+						<p>Multiple conditions</p>
+						<pre><code data-trim data-noescape class="bash">
+						if [[ CONDITION1 ]] && [[ CONDITION2 ]]; then
+						  #code
+						elif [[ CONDITION2 ]] || [[ CONDITION3 ]]; then
+						  #code
+						fi
+						</code></pre>
+					</section>
+					<section>
+						<p>A common case: checking to see if a command completed succesfully</p>
+						<p class="small">The special variable <code class="monokai-red">$?</code> contains the exit status (error code) of the most recently executed command</p>
+						<pre><code data-trim data-noescape class="bash">
+						#!/usr/bin/env bash
+						set -uxo pipefail # <- NOTE that -e is absent here
+						set -o errtrace
+
+						program_x arg1 arg2
+						RET=$?
+
+						if [[ $RET -eq 0 ]]; then
+						  # code if program_x ran fine
+						else
+						  # code if program_x returned an error
+						fi
+						</code></pre>
+					</section>
+					<section>
+						<p>Pitfall: <code class="monokai-red">errexit</code> and programs that can fail</p>
+						<pre><code data-trim data-noescape class="bash">
+						#!/usr/bin/env bash
+						set -euxo pipefail # <- NOTE that -e is now present
+						set -o errtrace
+
+						program_x arg1 arg2
+						#### If program_x failed, code below this line will
+						#### never be executed
+						RET=$?
+						if [[ $? -eq 0 ]]; then
+						  # code if program_x ran fine
+						else
+						  # code if program_x returned an error
+						fi
+						</code></pre>
+					</section>
+					<section>
+						<p>Pitfall: <code class="monokai-red">errexit</code> and programs that can fail</p>
+						<pre><code data-trim data-noescape class="bash">
+						#!/usr/bin/env bash
+						set -euxo pipefail # <- NOTE that -e is now present
+						set -o errtrace
+
+						program_x arg1 arg2 && RET=$? || RET=$?
+
+						if [[ $RET -eq 0 ]]; then
+						  # code if program_x ran fine
+						else
+						  # code if program_x returned an error
+						fi
+						</code></pre>
+					</section>
 				</section>
 				<section>
 					<section>
@@ -341,6 +403,16 @@
 						fun some_arg
 						</code></pre>
 					</section>
+				</section>
+				<section>
+					<p>Linting</p>
+					<ul>
+						<li class="fragment">Linters are programs that scans code and output errors.</li>
+						<li class="fragment">The most commonly used bash linter: <code>bashate</code> </li>
+					</ul>
+					<pre><code data-trim data-noescape class="bash">
+					bashate &lt;script.sh&gt;
+					</code></pre>
 				</section>
 				<section>
 					<p>Putting the pieces together</p>
